@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  excalidraw:
+    build:
+      context: .
+      dockerfile: Dockerfile.nex
+      args:
+        - BUILD_PROJECT_NAME=excalidraw
+        - BUILD_APP_NAME=excalidraw
+        - NODE_ENV=${NODE_ENV}
+        - BUILD_DATE=${BUILD_DATE}
+        - GIT_COMMIT=${GIT_COMMIT}
+        - GIT_SOURCE=https://github.com/nexpando-com/excalidraw
+        - GIT_TAG=${GIT_TAG}
+      platforms:
+        - linux/amd64
+        - linux/arm64
+    image: registry.nexpando.com/excalidraw/excalidraw:${VERSION:-latest}
