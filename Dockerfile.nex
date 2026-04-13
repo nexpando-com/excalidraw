@@ -1,0 +1,40 @@
+FROM node:20 AS build
+
+WORKDIR /opt/node_app
+
+COPY . .
+RUN mv .env.docker .env
+
+# do not ignore optional dependencies:
+# Error: Cannot find module @rollup/rollup-linux-x64-gnu
+RUN yarn --network-timeout 600000 --frozen-lockfile
+
+ARG NODE_ENV=production
+
+RUN yarn build:app:docker
+
+FROM nginx:1.29-alpine
+
+COPY --from=build /opt/node_app/excalidraw-app/build /usr/share/nginx/html
+
+# Make the script executable
+COPY env.sh /docker-entrypoint.d/env.sh
+RUN chmod +x /docker-entrypoint.d/env.sh
+
+# Define build-time arguments
+ARG BUILD_PROJECT_NAME=unspecified
+ARG BUILD_APP_NAME=unspecified
+ARG BUILD_DATE=unspecified
+ARG GIT_TAG=unspecified
+ARG GIT_COMMIT=unspecified
+ARG GIT_SOURCE=unspecified
+
+# Assign to labels
+LABEL com.nexpando.project=${BUILD_PROJECT_NAME} \
+      com.nexpando.app=${BUILD_PROJECT_NAME} \
+      com.nexpando.image.created=${BUILD_DATE} \
+      com.nexpando.image.version=${GIT_TAG} \
+      com.nexpando.image.revision=${GIT_COMMIT} \
+      com.nexpando.image.source=${GIT_SOURCE}
+
+HEALTHCHECK CMD wget -q -O /dev/null http://localhost || exit 1
